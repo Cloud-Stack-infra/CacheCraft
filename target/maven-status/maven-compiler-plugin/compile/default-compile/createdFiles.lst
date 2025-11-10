@@ -1,0 +1,8 @@
+com\cachecraft\controller\CacheController.class
+com\cachecraft\config\CacheConfig.class
+com\cachecraft\service\CacheManagerService.class
+com\cachecraft\service\AdaptiveTTLEngine.class
+com\cachecraft\metrics\MetricsCollector.class
+com\cachecraft\CacheCraftApplication.class
+com\cachecraft\config\OpenApiConfig.class
+com\cachecraft\model\CacheEntry.class

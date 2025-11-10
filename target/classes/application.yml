@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: cachecraft
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+  cache:
+    type: redis
+    caffeine:
+      spec: initialCapacity=100,maximumSize=500,expireAfterWrite=10m
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+
+logging:
+  level:
+    com.cachecraft: INFO
+    org.springframework: INFO
+
+# Actuator settings
+management.server.port: 8081

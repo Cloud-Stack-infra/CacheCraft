@@ -1,0 +1,39 @@
+name: Cache Behavior Verification
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-cache:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Application
+        run: mvn clean package
+
+      - name: Start CacheCraft
+        run: |
+          java -jar target/cachecraft-0.0.1-SNAPSHOT.jar &
+          sleep 20
+
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/linux.sh" | sh
+
+      - name: Run Cache Validation Collection
+        run: |
+          postman collection run "CacheCraft Behavior Suite" \
+            --environment "ci" \
+            --env-var baseUrl=http://localhost:8080 \
+            --env-var metricsUrl=http://localhost:8081 \
+            --bail \
+            --reporters cli,json \
+            --reporter-json-export cache-report.json

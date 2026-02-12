@@ -8,9 +8,6 @@ jobs:
   validate-cache:
     runs-on: ubuntu-latest
 
-    # 👇 This links the GitHub Environment you created
-    environment: postman-ci
-
     services:
       redis:
         image: redis:7
@@ -20,20 +17,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Java setup
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # Build Spring Boot
       - name: Build Application
         run: mvn -B clean package -DskipTests
 
+      # Start Spring Boot in background
       - name: Start CacheCraft
         run: |
           nohup java -jar target/cachecraft-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
           sleep 5
 
+      # Wait until app is healthy
       - name: Wait for Application to Start
         run: |
           for i in {1..40}; do
@@ -48,22 +49,30 @@ jobs:
           cat app.log
           exit 1
 
-      # ✅ Official Postman CLI Action
+      # Run Postman CLI without environment
       - name: Run Postman CLI
         uses: postmanlabs/postman-cli-action@v1
         with:
           api-key: ${{ secrets.POSTMAN_API_KEY }}
           command: >
-            postman collection run ${{ vars.POSTMAN_COLLECTION_UID }}
-            --environment ${{ vars.POSTMAN_ENV_UID }}
+            postman collection run ${{ secrets.POSTMAN_COLLECTION_UID }}
             --env-var baseUrl=http://localhost:8080
             --env-var metricsUrl=http://localhost:8081
             --bail
             --reporters cli,json
             --reporter-json-export cache-report.json
 
+      # Upload report
       - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
           name: cache-report
           path: cache-report.json
+
+      # Upload logs for debugging
+      - name: Upload Application Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-log
+          path: app.log
